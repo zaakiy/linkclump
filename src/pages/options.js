@@ -1,6 +1,6 @@
+// Config and constants
 var config = {
-	"triggers": 
-		[{"name": "Left"}, {"name": "Middle"}, {"name": "Right"}],
+	"triggers": [{"name": "Left"}, {"name": "Middle"}, {"name": "Right"}],
 	"actions": {
 		"win": {"name": "Opened in a New Window", "options": ["smart", "ignore", "delay", "block", "reverse", "unfocus"]},
 		"tabs": {"name": "Opened as New Tabs", "options": ["smart", "ignore", "delay", "close", "block", "reverse", "end"]},
@@ -9,52 +9,43 @@ var config = {
 	},
 	"options": {
 		"smart": {
-			"name": "smart select",
-			"type": "selection", 
+			"name": "smart select", "type": "selection",
 			"data": ["on", "off"],
 			"extra": "with smart select turned on linkclump tries to select only the important links"
 		},
-	"ignore": {
-		"name": "filter links",
-		"type": "selection-textbox",
-		"data": ["exclude links with words", "include links with words"],
-		"extra": "filter links that include/exclude these words; separate words with a comma ,"
+		"ignore": {
+			"name": "filter links", "type": "selection-textbox",
+			"data": ["exclude links with words", "include links with words"],
+			"extra": "filter links that include/exclude these words; separate words with a comma ,"
 		},
-	"copy": {
-		"name": "copy format",
-		"type": "selection",
-		"data": ["URLS with titles", "URLS only", "URLS only space separated", "titles only", "as link HTML", "as list link HTML", "as Markdown"],
-		"extra": "format of the links saved to the clipboard"
+		"copy": {
+			"name": "copy format", "type": "selection",
+			"data": ["URLS with titles", "URLS only", "URLS only space separated", "titles only", "as link HTML", "as list link HTML", "as Markdown"],
+			"extra": "format of the links saved to the clipboard"
 		},
-	"delay": {
-		"name": "delay in opening",
-		"type": "textbox",
-		"extra":"number of seconds between the opening of each link"
+		"delay": {
+			"name": "delay in opening", "type": "textbox",
+			"extra":"number of seconds between the opening of each link"
 		},
-	"close": {
-		"name": "close tab time",
-		"type": "textbox",
-		"extra":"number of seconds before closing opened tab (0 means the tab wouldn't close)"
+		"close": {
+			"name": "close tab time", "type": "textbox",
+			"extra":"number of seconds before closing opened tab (0 means the tab wouldn't close)"
 		},
-	"block": {
-		"name": "block repeat links in selection",
-		"type": "checkbox",
-		"extra":"select to block repeat links from opening"
+		"block": {
+			"name": "block repeat links in selection", "type": "checkbox",
+			"extra":"select to block repeat links from opening"
 		},
-	"reverse": {
-		"name": "reverse order",
-		"type": "checkbox",
-		"extra":"select to have links opened in reverse order"
+		"reverse": {
+			"name": "reverse order", "type": "checkbox",
+			"extra":"select to have links opened in reverse order"
 		},
-	"end": {
-		"name": "open tabs at the end",
-		"type": "checkbox",
-		"extra": "select to have links opened at the end of all other tabs"
+		"end": {
+			"name": "open tabs at the end", "type": "checkbox",
+			"extra": "select to have links opened at the end of all other tabs"
 		},
-	"unfocus": {
-		"name": "do not focus on new window",
-		"type": "checkbox",
-		"extra": "select to stop the new window from coming to the front"
+		"unfocus": {
+			"name": "do not focus on new window", "type": "checkbox",
+			"extra": "select to stop the new window from coming to the front"
 		}
 	}
 };
@@ -502,16 +493,11 @@ function save_action(event) {
 }
 
 function save_params() {
-	chrome.extension.sendMessage({
-		message: "update",
-		settings: params
-	});
+	chrome.runtime.sendMessage({ message: "update", settings: params });
 }
 
 function save_block() {
-	// replace any whitespace at end to stop empty site listings
 	var sites = $("#form_block").val().replace(/^\s+|\s+$/g, "").split("\n");
-	
 	if (Array.isArray(sites)) {
 		params.blocked = sites;
 		save_params();
@@ -521,11 +507,7 @@ function save_block() {
 $(function() {
 	var isFirstTime = window.location.href.indexOf("init=true") > -1;
 
-	// temp check to not load if in test mode
-	if (document.getElementById("guide2") === null) {
-		return
-	}
-
+	if (document.getElementById("guide2") === null) return;
 
 	document.getElementById("guide2").addEventListener("click", tour2);
 	document.getElementById("guide1").addEventListener("click", tour1);
@@ -537,22 +519,14 @@ $(function() {
 
 	setup_form();
 
-	chrome.extension.sendMessage({
-		message: "init"
-	}, function(response){
+	chrome.runtime.sendMessage({ message: "init" }, function(response) {
 		params = response;
-
-		for(var i in params.actions) {
+		for (var i in params.actions) {
 			$("#settings").append(setup_action(params.actions[i], i));
 		}
 		setup_text(keys);
-
 		$("#form_block").val(params.blocked.join("\n"));
 
-		if(isFirstTime) {
-			tour1();
-		} else {
-			tour2();
-		}
+		isFirstTime ? tour1() : tour2();
 	});
 });

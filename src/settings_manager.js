@@ -1,71 +1,78 @@
-var CURRENT_VERSION = "5";
+export class SettingsManager {
+  constructor() {
+    this.CURRENT_VERSION = "5";
+  }
 
-function SettingsManager() {}
+  load(callback) {
+    chrome.storage.local.get(["settings"], (result) => {
+      if (chrome.runtime.lastError) {
+        console.error("Storage error:", chrome.runtime.lastError);
+        callback({ error: "Error loading settings." });
+        return;
+      }
 
-SettingsManager.prototype.load = function() {
-	try {
-		// load data from local storage
-		var data = localStorage["settings"];
-		
-		// attempt to parse, if unable then make the assumption it has been corrupted
-		return JSON.parse(data)
-	} catch(error) {
-		var settings = this.init();
-		settings.error = "Error: "+error+"|Data:"+data;
-		return settings;
-	}
-};
+      let settings = result.settings;
+      if (!settings) {
+        settings = this.init(callback); // async init
+      } else {
+        callback(settings);
+      }
+    });
+  }
 
-SettingsManager.prototype.save = function(settings) {
-	// remove any error messages from object (shouldn't be there)
-	if (settings.error !== undefined) {
-		delete settings.error;
-	}
-	
-	localStorage["settings"] = JSON.stringify(settings);
-};
+  save(settings, callback = () => {}) {
+    if (settings.error !== undefined) delete settings.error;
+    chrome.storage.local.set({ settings }, callback);
+  }
 
-SettingsManager.prototype.isInit = function() {
-	return (localStorage["version"] !== undefined);
-};
+  isInit(callback) {
+    chrome.storage.local.get(["version"], (result) => {
+      callback(result.version !== undefined);
+    });
+  }
 
-SettingsManager.prototype.isLatest = function() {
-	return (localStorage["version"] === CURRENT_VERSION);
-};
+  isLatest(callback) {
+    chrome.storage.local.get(["version"], (result) => {
+      callback(result.version === this.CURRENT_VERSION);
+    });
+  }
 
-SettingsManager.prototype.init = function() {
-	// create default settings for first time user
-	var settings = {
-			"actions": {
-				"101": {
-					"mouse": 0,  // left mouse button
-					"key": 90,   // z key
-					"action": "tabs",
-					"color": "#FFA500",
-					"options": {
-						"smart": 0,
-						"ignore": [0],
-						"delay": 0,
-						"close": 0,
-						"block": true,
-						"reverse": false,
-						"end": false
-					}
-				}
-			},
-			"blocked": []
-		};
+  init(callback = () => {}) {
+    const settings = {
+      actions: {
+        "101": {
+          mouse: 0,
+          key: 90,
+          action: "tabs",
+          color: "#FFA500",
+          options: {
+            smart: 0,
+            ignore: [0],
+            delay: 0,
+            close: 0,
+            block: true,
+            reverse: false,
+            end: false
+          }
+        }
+      },
+      blocked: []
+    };
 
-	// save settings to store
-	localStorage["settings"] = JSON.stringify(settings);
-	localStorage["version"] = CURRENT_VERSION;
-	
-	return settings;
-};
+    chrome.storage.local.set({ settings, version: this.CURRENT_VERSION }, () => {
+      callback(settings);
+    });
 
+    return settings;
+  }
 
-SettingsManager.prototype.update = function() {
-	if (!this.isInit()) {
-		this.init();
-	}
-};
+  update(callback = () => {}) {
+    this.isInit((initialized) => {
+      if (!initialized) {
+        this.init(callback);
+      } else {
+        callback();
+      }
+    });
+  }
+}
